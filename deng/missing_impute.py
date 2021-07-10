@@ -51,3 +51,7 @@ class FfillImputeHandler(AbstractNullHandler):
 class NfillImputeHandler(AbstractNullHandler):
     def handle(self,request:Any) -> str:
         pass
+
+class BucketImputeHandler(AbstractNullHandler):
+    def handle(self,request:Any) -> str:
+        pass
