@@ -205,7 +205,7 @@ class ImbalanceHandlerReceiver(object):
 
         # LSH, bucketed random projection
         brp = BucketedRandomProjectionLSH(inputCol="features", outputCol="hashes",
-                                          seed=self.seed, sefl.bucketLength=self.bucketLength)
+                                          seed=self.seed,bucketLength=self.bucketLength)
         # smote only applies on existing minority instances
         model = brp.fit(dataInput_min)
         model.transform(dataInput_min)
