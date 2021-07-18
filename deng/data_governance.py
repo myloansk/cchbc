@@ -33,7 +33,20 @@ class AbstractDataPipe(DataPipe):
         return self._next_handler.handle(impute_method,sdf,colList)
     return sdf
 
-class DataIngest(AbstractDataPipe):
+class DataExtract(AbstractDataPipe):
     def pipe(self):
         self.Dframe = spark.sql("SELECT * FROM {cc}_db_app_bdto_de_l3.tx_bdto_features_tmp".format(cc=self.country))
         return  super().handle(impute_method,sdf,colList)
+
+class DataCheck(AbstractDataPipe):
+    def pipe(self):
+        print("num of rows:{nrows} num of columns:{ncol}".format(nrows=data.count(), ncol=len(data.columns)))
+        self.Dframe.printSchema()
+        self.Dframe.agg(f.countDistinct("employee_id")).show()
+        self.Dframe.groupBy('voluntary_leave_6Mafter').agg(f.countDistinct("employee_id")).show()
+        self.Dframe.groupBy('voluntary_leave_6Mafter','year_month').agg(f.countDistinct("employee_id")).show()
+
+class DataTransform(AbstractDataPipe):
+    def pipe(self):
+        self.Dframe =  Dframe.select(*(f.col(c).cast("double").alias(c)
+                            if c in convert_num else f.col(c) for c in Dframe.columns))
