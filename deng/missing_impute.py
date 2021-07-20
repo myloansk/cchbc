@@ -112,4 +112,13 @@ class NfillImputeHandler(AbstractNullHandler):
               return  super().handle(impute_method,sdf,colList)
 class BucketImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
-        pass
+        if impute_method == 'bucketing':
+          for colName in colList:
+              sdf = sdf.withColumn(colName,f.when(f.col(colName)<1, f.lit('-Inf_1'))
+                                            .otherwise(f.when(f.col(colName)<5, f.lit('1_5'))
+                                                        .otherwise(f.when(f.col(colName)<10, f.lit('5_10'))
+                                                                    .otherwise(f.when(f.col(colName)>=10, f.lit('10_Inf'))
+                                                                               .otherwise(f.lit('no_child'))))))
+          return  sdf
+        else:
+          return  super().handle(impute_method,sdf,colList)
