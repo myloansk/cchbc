@@ -122,3 +122,26 @@ class BucketImputeHandler(AbstractNullHandler):
           return  sdf
         else:
           return  super().handle(impute_method,sdf,colList)
+
+
+class ImputerFacade:
+  """"""
+  def __init__(self,zero_imputer:ZeroImputeHandler,unknown_imputer:UnknownImputeHandler,
+               avg_imputer:MeanImputeHandler,ffil_imputer:FfillImputeHandler,
+               nfil_imputer:NfillImputeHandler,bucket_imputer:BucketImputeHandler) ->None:
+      self.zero_imputer = ZeroImputeHandler()
+      self.unknown_imputer = UnknownImputeHandler()
+      self.avg_imputer = MeanImputeHandler()
+      self.ffil_imputer = FfillImputeHandler()
+      self.nfil_imputer = NfillImputeHandler()
+      self.bucket_imputer = BucketImputeHandler()
+
+  def impute_operation(self,method,data,col_list):
+
+      self.bucket_imputer.set_next(self.zero_imputer)\
+              .set_next(self.unknown_imputer)\
+              .set_next(self.avg_imputer)\
+              .set_next(self.ffil_imputer)\
+              .set_next(self.nfil_imputer)
+
+      self.bucket_imputer.handle(method,data,col_list)
