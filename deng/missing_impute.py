@@ -12,7 +12,6 @@ class NullHandler(ABC):
         pass
 class AbstractNullHandler(NullHandler):
 
-
     _next_handler: NullHandler = None
 
     def set_next(self,null_handler:NullHandler) -> NullHandler:
@@ -28,7 +27,12 @@ class AbstractNullHandler(NullHandler):
 
 class ZeroImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
-        pass
+        if impute_method == '0':
+                for colName in colList:
+                    sdf = sdf.withColumn(colName,f.when(f.col(colName).isNull(),f.lit(0)).otherwise(f.col(colName)))
+                return sdf
+            else:
+                return  super().handle(impute_method,sdf,colList)
 class MeanImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
         pass
