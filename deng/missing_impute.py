@@ -78,7 +78,20 @@ class UnknownImputeHandler(AbstractNullHandler):
 
 class FfillImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
-        pass
+        if impute_method == 'ffil':
+              w = Window.partitionBy('employee_id')\
+                        .orderBy(f.col('year_month').cast("integer")).rowsBetween(Window.unboundedPreceding, 0)
+              for colName in colList:
+                  filled_column = f.last(sdf[colName], ignorenulls=True).over(w)
+                  sdf = sdf.withColumn(colName + '_filled',
+                                       f.when(filled_column.isNotNull(),filled_column).otherwise(f.lit("Unknown")))
+              for colName in colList:
+                  sdf = sdf.drop(colName)\
+                           .withColumnRenamed(colName + '_filled',colName)
+
+              return  sdf
+          else:
+              return super().handle(impute_method,sdf,colList)
 
 class NfillImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
