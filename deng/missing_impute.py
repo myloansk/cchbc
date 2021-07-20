@@ -62,14 +62,20 @@ class MeanImputeHandler(AbstractNullHandler):
                 for colName in colList:
                    sdf = sdf.withColumn(colName,
                                         f.coalesce(f.col(colName),f.col("rolling_mean_impute" + colName)).cast('float'))
-
                 return sdf
             else:
                 return super().handle(impute_method,sdf,colList)
 
 class UnknownImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
-        pass
+        if impute_method == 'unknown':
+                for colName in colList:
+                   sdf = sdf.withColumn(colName,f.when((f.col(colName).isNull()) | (f.col(colName) == 'null')
+                                               ,f.lit('Unknown')).otherwise(f.col(colName)))
+                return sdf
+            else:
+                return  super().handle(impute_method,sdf,colList)
+
 class FfillImputeHandler(AbstractNullHandler):
     def handle(self,impute_method,sdf,colList):
         pass
