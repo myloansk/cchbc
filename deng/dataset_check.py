@@ -52,6 +52,4 @@ class DataCheckFacade():
         self.data_check.data_types()
         self.data_check.null_percentage_per_column()
         self.data_check.agg_check('voluntary_leave_6Mafter','employee_id')
-        #AbstractDataPipe.Dframe.agg(f.countDistinct("employee_id")).show()
-        #AbstractDataPipe.Dframe.groupBy('voluntary_leave_6Mafter').agg(f.countDistinct("employee_id")).show()
-        #AbstractDataPipe.Dframe.groupBy('voluntary_leave_6Mafter','year_month').agg(f.countDistinct("employee_id")).show()
+        
