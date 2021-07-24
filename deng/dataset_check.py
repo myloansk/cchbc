@@ -17,7 +17,7 @@ class DataCheck():
     def cnt_column(self):
         return len(self.Dframe.columns)
 
-    def data_types(self):pass
+    def data_types(self):
         self.Dframe.printScema()
 
     def summary(self):pass
@@ -41,3 +41,17 @@ class DataCheck():
 
         """
         return self.Dframe.groupBy(col).agg(f.countDistinct(pk_col))
+
+class DataCheckFacade():
+    """Short summary."""
+    def __init__(self,Dframe):
+        self.data_check = DataCheck(Dframe)
+
+    def check_buffer(self):
+        print("num of rows:{nrows} num of columns:{ncol}".format(nrows=self.data_check.cnt_rows, ncol=self.data_check.cnt_columns)
+        self.data_check.data_types()
+        self.data_check.null_percentage_per_column()
+        self.data_check.agg_check('voluntary_leave_6Mafter','employee_id')
+        #AbstractDataPipe.Dframe.agg(f.countDistinct("employee_id")).show()
+        #AbstractDataPipe.Dframe.groupBy('voluntary_leave_6Mafter').agg(f.countDistinct("employee_id")).show()
+        #AbstractDataPipe.Dframe.groupBy('voluntary_leave_6Mafter','year_month').agg(f.countDistinct("employee_id")).show()
