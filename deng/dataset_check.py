@@ -13,18 +13,20 @@ class DataCheck():
         self.Dframe = Dframe
 
     def cnt_rows(self):
-        pass
+        return self.Dframe.count()
     def cnt_column(self):
-        pass
+        return len(self.Dframe.columns)
 
     def data_types(self):pass
-        pass
+        self.Dframe.printScema()
 
     def summary(self):pass
 
     def diff_sdf(self):pass
 
     def null_percentage_per_column(self):
-         pass
+         amount_missing_df = self.Dframe\
+                                 .select([(f.count(f.when(f.isnan(c) | f.col(c).isNull(), c))/f.count(f.lit(1))).alias(c)
+                                          for c in  self.Dframe.columns])
     def show_five(self):
-        pass
+        self.Dframe.take(5)
