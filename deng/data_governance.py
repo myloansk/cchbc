@@ -76,9 +76,29 @@ class DataTest(AbstractDataPipe):
       return  super().pipe()
 
   class DataTransform(AbstractDataPipe):
+    """
+    DataTransform class converts columns pyspark.DataFrame to double.
+    Both the pyspark.DataFrame and the columns to be converted are provided through inheritance by parent class AbstractDataPipe
+    """
     def pipe(self):
 
         AbstractDataPipe.Dframe =  AbstractDataPipe.Dframe.select(*(f.col(c).cast("double").alias(c)
                             if c in AbstractDataPipe.pipeline_param_dictionary[3] else f.col(c) for c in AbstractDataPipe.Dframe.columns))
+        AbstractDataPipe.step  = AbstractDataPipe.step + 1
+        return  super().pipe()
+
+ class DataMissingImpute(AbstractDataPipe):
+    def pipe(self):
+        imputer = ImputerFacade(ZeroImputeHandler(),UnknownImputeHandler(),MeanImputeHandler(),
+                                FfillImputeHandler(),NfillImputeHandler(),BucketImputeHandler())
+        for mtd in set(self.IMPUTE_DICT.values()):
+
+            col_lst = [k for k,v in self.IMPUTE_DICT.items() if  (v==mtd) and (k in AbstractDataPipe.Dframe.columns)]
+
+            AbstractDataPipe.Dframe = imputer.impute_operation(mtd,AbstractDataPipe.Dframe,col_lst)
+
+        amount_missing_df = AbstractDataPipe.Dframe.select([(f.count(f.when(f.isnan(c) | f.col(c).isNull(), c))/f.count(f.lit(1))).alias(c)
+                                                            for c in  AbstractDataPipe.Dframe.columns])
+        display(amount_missing_df)
         AbstractDataPipe.step  = AbstractDataPipe.step + 1
         return  super().pipe()
