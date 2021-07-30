@@ -52,7 +52,7 @@ class DataExtract(AbstractDataPipe):
     The query used for the data extraction and pyspark.DataFrame to which data are going to be store
     are inheted by parent class AbstractDataPipe
     Finally, it returns control to parent class method pipe once data extracted trainDframe
-    and pyspark.DataFrame is populated with them 
+    and pyspark.DataFrame is populated with them
     """
     def pipe(self):
         AbstractDataPipe.step = 1
@@ -63,9 +63,22 @@ class DataExtract(AbstractDataPipe):
         return  super().pipe()
 
 class DataTest(AbstractDataPipe):
+    """
+    DataTest class initiates an Facade object(data_test) that provides an interface
+    to the DataCheck class that contains methods that run a number of descriptive stats
+    on the inhereted pyspark.DataFrame by AbstractDataPipe
+    """
     def pipe(self):
 
       data_test = DataCheckFacade(AbstractDataPipe.Dframe)
       data_test.check_buffer()
       AbstractDataPipe.step  = AbstractDataPipe.step + 1
       return  super().pipe()
+
+  class DataTransform(AbstractDataPipe):
+    def pipe(self):
+
+        AbstractDataPipe.Dframe =  AbstractDataPipe.Dframe.select(*(f.col(c).cast("double").alias(c)
+                            if c in AbstractDataPipe.pipeline_param_dictionary[3] else f.col(c) for c in AbstractDataPipe.Dframe.columns))
+        AbstractDataPipe.step  = AbstractDataPipe.step + 1
+        return  super().pipe()
