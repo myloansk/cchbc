@@ -44,3 +44,13 @@ class AbstractDataPipe(DataPipe):
     if self._next_handler:
         return self._next_handler.pipe()
     return self.Dframe
+
+
+class DataExtract(AbstractDataPipe):
+    def pipe(self):
+        AbstractDataPipe.step = 1
+        query = AbstractDataPipe.pipeline_param_dictionary[1][1].format(cc=self.country,db=TEMP_DB)
+        AbstractDataPipe.Dframe = spark.sql(query)
+        AbstractDataPipe.step  = AbstractDataPipe.step + 1
+
+        return  super().pipe()
