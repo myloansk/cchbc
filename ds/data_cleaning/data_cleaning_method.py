@@ -34,21 +34,37 @@ class DataCleaner():
      self._method = method
 
 class Correlation(ABC):
+    """
+    Correlation class provides an interface
+    for calculating corrleation based on different algorithms
+    """
     @abstractmethod
     def apply(self,Dframe,params:Dictionary):
         pass
 
 class DataSelect(ABC):
+    """
+    The DataSelect class provides an interface of
+    different methods to select data from
+    pyspark.DataFrame
+    """
     @abstractmethod
     def apply(self,Dframe,params:Dictionary):
         pass
 
 class SplitTrainTest(ABC):
+    """
+    SplitTrainTest split DataFrame to train/test setter
+    """
     @abstractmethod
     def apply(self,Dframe,params:Dictionary):
         pass
 
 class DataTypeConvert(ABC):
+    """
+    DataTypeConvert converts pyspark.DataFrame
+    colunms to a specified datatype
+    """
     @abstractmethod
     def apply(self,Dframe,params:Dictionary):
         pass
