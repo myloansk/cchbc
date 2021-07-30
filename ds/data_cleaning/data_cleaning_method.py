@@ -68,3 +68,7 @@ class DataTypeConvert(ABC):
     @abstractmethod
     def apply(self,Dframe,params:Dictionary):
         pass
+
+class toDouble(DataTypeConvert):
+    def apply(self,Dframe,params:Dictionary):
+        pass
