@@ -109,6 +109,10 @@ class DataTest(AbstractDataPipe):
         return  super().pipe()
 
 class DataOneHotEncode(AbstractDataPipe):
+    """
+    DataOneHotEncode class create indicator varibles for each combination
+    of categorical feature and its respective value range in a pyspark.DataFrame
+    """
   def pipe(self):
 
     AbstractDataPipe.Dframe = AbstractDataPipe.Dframe.drop(*AbstractDataPipe.pipeline_param_dictionary[7])
@@ -123,3 +127,121 @@ class DataOneHotEncode(AbstractDataPipe):
                                   .drop(cat_col)
     AbstractDataPipe.step  = AbstractDataPipe.step + 1
     return  super().pipe()
+
+class DataSlice(AbstractDataPipe):
+    """
+    DataSlice class updates pyspark.DataFrame by keeping rows corresponding to certain periods(year_month)
+    The period of interest and pyspark.DataFrame are inheted by parent class AbstractDataPipe
+    """
+  def pipe(self):
+
+      AbstractDataPipe.Dframe = AbstractDataPipe.Dframe.filter(f.col('year_month').isin(AbstractDataPipe.pipeline_param_dictionary[4]) ).drop('year')
+      AbstractDataPipe.step  = AbstractDataPipe.step + 1
+      return  super().pipe()
+
+  class DataCorrelation(AbstractDataPipe):
+    """
+    DataCorrelation removes highly correlated features in the pyspark.DataFame.
+    In particular ,it removes one feature  from a pair of features whose correlation exceeds a threshold
+    The threshold(UBOUND) and pyspark.DataFrame are inheted by parent class AbstractDataPipe
+    """
+  def pipe(self):
+
+      correlation_exclude_list = AbstractDataPipe.pipeline_param_dictionary[5][0]
+      upper_bound              = AbstractDataPipe.pipeline_param_dictionary[5][1]
+      availableCols = [c[0] for c in  AbstractDataPipe.Dframe.dtypes if c[1] in ['int', 'double', 'bigint', 'float'] if c[0] not in correlation_exclude_list]
+      priority_list = list(availableCols)
+      features =  AbstractDataPipe.Dframe.select(availableCols).rdd.map(lambda row: row[:])
+      corr_m = pd.DataFrame(Statistics.corr(features), index=priority_list, columns=priority_list)
+
+      upper = corr_m.where(np.triu(corr_m, k=1).astype(np.bool))
+      upper[upper < upper_bound] = np.nan # Only consider correlation over ubound
+
+      highest_corr_pairs = upper.loc[:, upper.max().sort_values(ascending=False).index].idxmax().dropna() # For each column, find the highest correlation pair and the sort results
+
+      sorted_corr_pairs = list(zip(highest_corr_pairs, highest_corr_pairs.index))
+      for fk,fv in dict(zip(highest_corr_pairs, highest_corr_pairs.index)).items():
+          print('correlated pairs({key}->{value})'.format(key=fk,value=fv))
+          col_correlated = [sorted(i, key=priority_list.index, reverse=True)[0] for i in sorted_corr_pairs]
+          # Drop columns
+          AbstractDataPipe.Dframe =  AbstractDataPipe.Dframe.drop(*set(col_correlated))
+          # Print columns that were removed
+      print(*('Removing column: {} '.format(c) for c in set(col_correlated)), sep='\n')
+      AbstractDataPipe.step  = AbstractDataPipe.step + 1
+      return super().pipe()
+
+  class DataSave(AbstractDataPipe):
+    """
+    DataSave save pyspark.DataFrame to specific table in hive
+    whose name(database name + tablename) is proivided through inheritance by parent class AbstractDataPipe """
+  def pipe(self):
+      curated_table = AbstractDataPipe.pipeline_param_dictionary[6].format(db=TEMP_DB,cc=self.country)
+
+      AbstractDataPipe.Dframe.coalesce(24)\
+                      .write\
+                      .mode('overwrite')\
+                      .format("parquet")\
+                      .saveAsTable(curated_table)
+      AbstractDataPipe.step  = AbstractDataPipe.step + 1
+      return super().pipe()
+
+class DataSplit(AbstractDataPipe):
+    """
+    DataSplit class split pyspark.DataFrame to train/test  pyspark.DataFRames  in 70/30 ratio
+    on BD wise level in order employees_id found in one set would not be present in the other to avoid any model leakage
+
+    """
+  def pipe(self):
+    column_names =  AbstractDataPipe.Dframe.columns
+    AbstractDataPipe.model_input_columns =  [item for item in colNames if item not in AbstractDataPipe.pipeline_param_dictionary[8] and '=Unknown' not in item]
+
+    bd_ids = [i.employee_id for i in AbstractDataPipe.Dframe.select('employee_id').distinct().collect()]
+
+    df = AbstractDataPipe.Dframe
+
+    w = Window.partitionBy(f.col('employee_id')).orderBy(f.col('year_month').cast('integer').desc())
+    df = df.withColumn('isLatest', f.row_number().over(w)).filter(f.col('isLatest')==1).drop('isLatest')\
+           .filter(f.col('employee_id').isin(bd_ids)).select(f.col('employee_id'),
+                                                          f.col('voluntary_leave_6MAfter'))
+
+    leaver_ids =[i.employee_id for i in df.filter(f.col('voluntary_leave_6MAfter')==1).select('employee_id').distinct().collect()]
+    stayers_ids  =[i.employee_id for i in df.filter(f.col('voluntary_leave_6MAfter').isin([9999,0])).select('employee_id').distinct().collect()]
+
+
+    leavers_size_population = len(leaver_ids)
+    leavers_train_test_threshold = int(leavers_size_population * 0.70)
+
+    stayers_size_population = len(stayers_ids)
+    stayers_train_test_threshold = int(stayers_size_population * 0.70)
+
+
+    leavers_train_ids,leavers_test_ids = leaver_ids[:leavers_train_test_threshold], leaver_ids[leavers_train_test_threshold:]
+    stayers_train_ids,stayers_test_ids = stayers_ids[:stayers_train_test_threshold], leaver_ids[stayers_train_test_threshold:]
+
+    AbstractDataPipe.trainDframe = AbstractDataPipe.Dframe.filter(f.col('employee_id').isin(leavers_train_ids + stayers_train_ids))
+    AbstractDataPipe.testDframe  = AbstractDataPipe.Dframe.filter(f.col('employee_id').isin(leavers_test_ids + stayers_test_ids))
+
+    return super().pipe()
+
+class DataOversampling(AbstractDataPipe):
+  def pipe(self):
+    continuousCols = [c[0] for c in AbstractDataPipe.trainDframe.dtypes
+                       if c[1] in ['integer', 'double', 'bigint','tinyint', 'float'] if c[0] not in ['employee_id','year_month','label','year'] + LABEL_COLUMNS]
+    categoricalCols = [c[0] for c in AbstractDataPipe.trainDframe.dtypes
+                       if c[1] in ['string'] if c[0] not in  ['employee_id','year_month','label','year'] + LABEL_COLUMNS]
+    AbstractDataPipe.trainDframe =AbstractDataPipe.trainDframe.withColumn('updated_voluntary_leave_6Mafter',
+                                          f.when(f.col('voluntary_leave_6Mafter') != 9999,
+                                          f.col('voluntary_leave_6Mafter')).otherwise(f.lit(0)) )
+
+    AbstractDataPipe.testDframe =AbstractDataPipe.testDframe.withColumn('label',
+                                                                        f.when(f.col('voluntary_leave_6Mafter') != 9999,
+                                                                               f.col('voluntary_leave_6Mafter')).otherwise(f.lit(0)) )
+
+
+    receiver = ImbalanceHandlerReceiver('get_samples')
+    invoker = ImbalanceMethodInvoker()
+
+    imb_obj = ImbalanceFacade(receiver,invoker)
+    AbstractDataPipe.trainDframe = imb_obj.compute(AbstractDataPipe.trainDframe,continuousCols,categoricalCols)
+    AbstractDataPipe.step  = AbstractDataPipe.step + 1
+    return super().pipe()
