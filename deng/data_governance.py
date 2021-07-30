@@ -16,37 +16,31 @@ class AbstractDataPipe(DataPipe):
   """
   """
   _next_handler: DataPipe = None
+  pipeline_param_dictionary = {  1:[EXTRACT_RAW_DATA_QUERY,EXTRACT_MODEL_INPUT_DATA_QUERY],
+                                 3:CONVERT_NUM,
+                                 4:PERIOD,
+                                 5:[CORRELATION_EXCLUDE_LIST,UBOUND],
+                                 6:CURATED_TABLE,
+                                 7:ONE_HOT_ENCODED_EXCLUDED_COLUMNS,
+                                 8:MODEL_EXCLUDED_COLUMNS
+                              }
+
   def __init__(self,country,name):
-     self.init_ts = datetime.datetime.now().strftime("%Y%m%d_ %H%M%S")
-     self.name  = name + '_' + country + '_' + datetime.datetime.now().strftime("%Y%m%d_ %H%M%S")
-     self.country = country
-     self.Dframe = None
+      self.init_ts = datetime.datetime.now().strftime("%Y%m%d_ %H%M%S")
+      self.name  = name + '_' + country + '_' + datetime.datetime.now().strftime("%Y%m%d_ %H%M%S")
+      self.country = country
+      self.Dframe = None
+      self.model_input_columns = None
+      self.trainDframe = None
+      self.testDframe = None
+      self.step  = None
 
   def set_next_stage(self,null_handler:DataPipe) -> DataPipe:
       self._next_handler = null_handler
-
       return null_handler
 
   @abstractmethod
-  def pipe(self,impute_method,sdf,colList):
+  def pipe(self):
     if self._next_handler:
-        return self._next_handler.handle(impute_method,sdf,colList)
-    return sdf
-
-class DataExtract(AbstractDataPipe):
-    def pipe(self):
-        self.Dframe = spark.sql("SELECT * FROM {cc}_db_app_bdto_de_l3.tx_bdto_features_tmp".format(cc=self.country))
-        return  super().handle(impute_method,sdf,colList)
-
-class DataCheck(AbstractDataPipe):
-    def pipe(self):
-        print("num of rows:{nrows} num of columns:{ncol}".format(nrows=data.count(), ncol=len(data.columns)))
-        self.Dframe.printSchema()
-        self.Dframe.agg(f.countDistinct("employee_id")).show()
-        self.Dframe.groupBy('voluntary_leave_6Mafter').agg(f.countDistinct("employee_id")).show()
-        self.Dframe.groupBy('voluntary_leave_6Mafter','year_month').agg(f.countDistinct("employee_id")).show()
-
-class DataTransform(AbstractDataPipe):
-    def pipe(self):
-        self.Dframe =  Dframe.select(*(f.col(c).cast("double").alias(c)
-                            if c in convert_num else f.col(c) for c in Dframe.columns))
+        return self._next_handler.pipe()
+    return self.Dframe
