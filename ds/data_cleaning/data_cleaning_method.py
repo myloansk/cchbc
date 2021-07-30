@@ -35,5 +35,20 @@ class DataCleaner():
 
 class Correlation(ABC):
     @abstractmethod
-    def run(self,Dframe,params:Dictionary):
+    def apply(self,Dframe,params:Dictionary):
+        pass
+
+class DataSelect(ABC):
+    @abstractmethod
+    def apply(self,Dframe,params:Dictionary):
+        pass
+
+class SplitTrainTest(ABC):
+    @abstractmethod
+    def apply(self,Dframe,params:Dictionary):
+        pass
+
+class DataTypeConvert(ABC):
+    @abstractmethod
+    def apply(self,Dframe,params:Dictionary):
         pass
