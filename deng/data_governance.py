@@ -88,6 +88,11 @@ class DataTest(AbstractDataPipe):
         return  super().pipe()
 
  class DataMissingImpute(AbstractDataPipe):
+    """
+    DataMissingImpute class initiates a facade object(imputer) that delegates
+    the imputation of missing values of pyspark.DataFrame to appropriate methods of MissingImputerHandler
+    class. The imputation strategy followed on each column along with pyspark.DataFrame is provided through inheritance by AbstractDataPipe
+    """
     def pipe(self):
         imputer = ImputerFacade(ZeroImputeHandler(),UnknownImputeHandler(),MeanImputeHandler(),
                                 FfillImputeHandler(),NfillImputeHandler(),BucketImputeHandler())
@@ -102,3 +107,19 @@ class DataTest(AbstractDataPipe):
         display(amount_missing_df)
         AbstractDataPipe.step  = AbstractDataPipe.step + 1
         return  super().pipe()
+
+class DataOneHotEncode(AbstractDataPipe):
+  def pipe(self):
+
+    AbstractDataPipe.Dframe = AbstractDataPipe.Dframe.drop(*AbstractDataPipe.pipeline_param_dictionary[7])
+    continuous_columns = [c[0] for c in AbstractDataPipe.Dframe.dtypes
+                       if c[1] in ['integer', 'double', 'bigint','tinyint', 'float'] if c[0] not in ['employee_id','year_month','label','year']+LABEL_COLUMNS]
+    categorical_columns = [c[0] for c in AbstractDataPipe.Dframe.dtypes if c[1] in ['string'] if c[0] not in  ['employee_id','year_month','label','year']+LABEL_COLUMNS]
+    for cat_col in categorical_columns:
+        categorical_column_values = AbstractDataPipe.Dframe.select(cat_col).distinct().rdd.flatMap(lambda x:x).collect()
+        expr = [f.when(f.col(cat_col) == cat,1).otherwise(0)\
+                                         .alias(str(cat_col+'='+cat)) for cat in categorical_column_values]
+        AbstractDataPipe.Dframe = AbstractDataPipe.Dframe.select( expr + AbstractDataPipe.Dframe.columns )\
+                                  .drop(cat_col)
+    AbstractDataPipe.step  = AbstractDataPipe.step + 1
+    return  super().pipe()
