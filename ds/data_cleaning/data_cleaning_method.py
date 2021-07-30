@@ -52,6 +52,16 @@ class DataSelect(ABC):
     def apply(self,Dframe,params:Dictionary):
         pass
 
+class DataSelectDelegatesToBDPEDataFilter(DataSelect):
+    @abstractmethod
+    def apply(self,Dframe):
+        pass
+
+class DataSelectDelegatesToDataSlice(DataSelect):
+    @abstractmethod
+    def apply(self,Dframe):
+        pass
+
 class SplitTrainTest(ABC):
     """
     SplitTrainTest split DataFrame to train/test setter
@@ -71,4 +81,5 @@ class DataTypeConvert(ABC):
 
 class toDouble(DataTypeConvert):
     def apply(self,Dframe,params:Dictionary):
-        pass
+        Dframe =  Dframe.select(*(f.col(c).cast("double").alias(c)
+                            if c in params["double"].values() else f.col(c) for c in AbstractDataPipe.Dframe.columns))
