@@ -47,6 +47,13 @@ class AbstractDataPipe(DataPipe):
 
 
 class DataExtract(AbstractDataPipe):
+    """
+    DataExtract extracts data from hive a table and stored them to a pyspark.DataFrame
+    The query used for the data extraction and pyspark.DataFrame to which data are going to be store
+    are inheted by parent class AbstractDataPipe
+    Finally, it returns control to parent class method pipe once data extracted trainDframe
+    and pyspark.DataFrame is populated with them 
+    """
     def pipe(self):
         AbstractDataPipe.step = 1
         query = AbstractDataPipe.pipeline_param_dictionary[1][1].format(cc=self.country,db=TEMP_DB)
@@ -54,3 +61,11 @@ class DataExtract(AbstractDataPipe):
         AbstractDataPipe.step  = AbstractDataPipe.step + 1
 
         return  super().pipe()
+
+class DataTest(AbstractDataPipe):
+    def pipe(self):
+
+      data_test = DataCheckFacade(AbstractDataPipe.Dframe)
+      data_test.check_buffer()
+      AbstractDataPipe.step  = AbstractDataPipe.step + 1
+      return  super().pipe()
