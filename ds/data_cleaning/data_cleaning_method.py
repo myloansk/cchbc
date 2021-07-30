@@ -33,6 +33,7 @@ class DataCleaner():
  def method(self,method:Method) ->None:
      self._method = method
 
-
-
- 
+class Correlation(ABC):
+    @abstractmethod
+    def run(self,Dframe,params:Dictionary):
+        pass
