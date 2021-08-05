@@ -10,6 +10,7 @@ class DeepNet(ABC):
         self.params = params
         self.deep_net_obj = None
 
+    @abstractmethod
     def net_init(self) -> None:
         pass
 
