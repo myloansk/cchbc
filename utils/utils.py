@@ -6,14 +6,24 @@ from pyspark.sql import DataFrame
 
 class Utilities(ABC):
     """
-    The Command interface declares a method for executing a command.
+    The Utilities interface declares a method(execute)
+    for executing a commands defined below.
     """
 
     @abstractmethod
     def execute(self) -> None:
         pass
 
-cclass saveResults(Utilities):
+class saveResults(Utilities):
+    """
+    saveResults class saves pyspark.Dataframe in parquet format
+    to a temporary location defined by location passed as an argument by client
+    followed by suffix temp before it moved to the permanent location that user
+    provided at initiliation of object
+    Args:
+     df:pyspark.Dataframe provided by client to be stored in specified _location
+     location:string file directory in which data in pyspark.Dataframe will be store
+    """
     def __init__(self, df: DataFrame, location: str) -> None:
         self._df= df
         self._location = location
@@ -30,6 +40,13 @@ cclass saveResults(Utilities):
         spark.sql(f'DROP TABLE IF EXISTS {temp_location}')
 
 class dataCheck(Utilities):
+    """
+    dataCheck class checks pyspark.Dataframe columns for nulls and return those
+    columns which have nulls 
+    Args:
+     df:pyspark.Dataframe provided by client to be stored in specified _location
+     location:string file directory in which data in pyspark.Dataframe will be store
+    """
     def __init__(self, df: DataFrame, location: str) -> None:
         self._df= df
         self._location = location
