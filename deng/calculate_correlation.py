@@ -56,14 +56,13 @@ class correlationsDelegatesCalculationToPypsparkApi(Correlation):
 
 @delegates()
 class correlationsDelegatesCalcToPythonLibs(Correlation):
-    def __init__(self,inputDf:DataFrame,col_list:List, **kwargs)->None:
-        super().__init_(self,inputDf,col_lst, replace:str='replace',drop:str='drop',drop_samples:str='drop_samples',
-         drop_features:str='drop_features',skip:str='skip',default_replace_value:float=0.0)
+    def __init__(self, **kwargs)->None:
+        super().__init__(self, **kwargs)
 
-    def calculate_correlations(self)->DataFrame:
-        self._corrDf = compute_associations(self._inputDf[self._col_lst],nominal_columns='auto',
-                                            numerical_columns=None,mark_columns=False,nom_nom_assoc='cramer',
-                                            num_num_assoc='pearson,bias_correction=True,
-                                            nan_strategy=self.drop_samples,nan_replace_value=self.default_replace_value,
-                                            clustering=False
-                                           )
+    def calculate_correlations(self,inputDf:DataFrame,col_list:List):
+        return spark.createDataFrame(compute_associations(inputDf[col_lst],nominal_columns='auto',
+                                                                  numerical_columns=None,mark_columns=False,nom_nom_assoc='cramer',
+                                                                  num_num_assoc='pearson',bias_correction=True,
+                                                                  nan_strategy=self._drop_samples,nan_replace_value=self._default_replace_value,
+                                                                  clustering=False
+                                                                 ))
