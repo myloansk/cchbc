@@ -42,16 +42,15 @@ class Correlation(ABC):
 class correlationsDelegatesCalculationToPypsparkApi(Correlation):
     def __init__(self,**kwargs)->None:super().__init__(self,**kwargs)
 
-    def calculate_correlations(self)->DataFrame:
-        availableCols = [c[0] for c in self._inputDf.dtypes
-                         if c[1] in self.data_types_lst if c[0] not in self.exclude_lst]
+    def calculate_correlations(self,inputDf:DataFrame,col_list:List):
+        availableCols = [c[0] for c in inputDf.dtypes
+                         if c[1] in self._data_types_lst if c[0] not in self._exclude_lst]
 
         priority_list = list(availableCols)
         features = inputDf.select(availableCols).rdd.map(lambda row: row[:])
-        self._corrDf = pd.DataFrame(Statistics.corr(features), index=priority_list,
-                                    columns=priority_list)
 
-        return self._corrDf
+        return pd.DataFrame(Statistics.corr(features), index=priority_list,
+                                           columns=priority_list)
 
 @delegates()
 class correlationsDelegatesCalcToPythonLibs(Correlation):
