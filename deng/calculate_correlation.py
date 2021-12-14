@@ -40,8 +40,7 @@ class Correlation(ABC):
 
 @delegates()
 class correlationsDelegatesCalculationToPypsparkApi(Correlation):
-    def __init__(self,inputDf:DataFrame, col_list:List, **kwargs)->None:
-        super().__init_(self,inputDf,col_lst,data_types_lst=['int', 'double', 'bigint', 'float'],exclude_lst=[])
+    def __init__(self,**kwargs)->None:super().__init__(self,**kwargs)
 
     def calculate_correlations(self)->DataFrame:
         availableCols = [c[0] for c in self._inputDf.dtypes
@@ -56,8 +55,7 @@ class correlationsDelegatesCalculationToPypsparkApi(Correlation):
 
 @delegates()
 class correlationsDelegatesCalcToPythonLibs(Correlation):
-    def __init__(self, **kwargs)->None:
-        super().__init__(self, **kwargs)
+    def __init__(self, **kwargs)->None:super().__init__(self, **kwargs)
 
     def calculate_correlations(self,inputDf:DataFrame,col_list:List):
         return spark.createDataFrame(compute_associations(inputDf[col_lst],nominal_columns='auto',
