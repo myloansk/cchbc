@@ -52,6 +52,23 @@ class correlationsDelegatesCalculationToPypsparkApi(Correlation):
         return pd.DataFrame(Statistics.corr(features), index=priority_list,
                                            columns=priority_list)
 
+   def remove_correlated_features(self, inputDf:DataFrame, col_lst:List, ubound:float = 0.85)->DataFrame:
+       corr_m = self.calculate_correlations(inputDf,col_lst)
+       upper =  corr_m.where(np.triu(corr_m, k=1).astype(np.bool))
+       # Only consider correlation over ubound
+       upper[upper < ubound] = np.nan
+       # For each column, find the highest correlation pair and the sort results
+       highest_corr_pairs = upper.loc[:, upper.max().sort_values(ascending=False).index].idxmax().dropna()
+       sorted_corr_pairs = list(zip(highest_corr_pairs, highest_corr_pairs.index))
+
+       col_correlated = [sorted(i, key=priority_list.index, reverse=True)[0] for i in sorted_corr_pairs]
+
+       outputDf = inputDf.drop(*set(col_correlated))
+
+       # Print columns that were removed
+       print(*('Removing column: {} '.format(c) for c in set(col_correlated)), sep='\n')
+       return outputDf         
+
 @delegates()
 class correlationsDelegatesCalcToPythonLibs(Correlation):
     def __init__(self, **kwargs)->None:super().__init__(self, **kwargs)
