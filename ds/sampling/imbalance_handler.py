@@ -52,17 +52,17 @@ class DownSampling(ImbalanceHandler):
         self.seed = seed
 
     def get_samples(self):
-    """
-    Downsample majority class to get desired major to minor ratio, only accepts binary classification
-    inputs:
-        * sdf pyspark.Dataframe:  df before feature selection
-        * desired_major_to_minor_ratio (int)
-        * label_col: col name for label in spark df
-        * major_class_val (int): The label for majority class. 0 for majority, 1 for minority by default
-        * seed: for random function
-    output:
-        * downsampled_spark_df: the spark df after downsampling majority class.
-    """
+        """
+          Downsample majority class to get desired major to minor ratio, only accepts binary classification
+          inputs:
+          * sdf pyspark.Dataframe:  df before feature selection
+          * desired_major_to_minor_ratio (int)
+          * label_col: col name for label in spark df
+          * major_class_val (int): The label for majority class. 0 for majority, 1 for minority by default
+          * seed: for random function
+          output:
+          * downsampled_spark_df: the spark df after downsampling majority class.
+       """
     # current distribution of 2 classes, 0 for major, 1 for minor by default
     minor_class_val = 1 - self.major_class_val
     class_count = dict(self.sdf.groupBy(col(self.label_col)).count().collect())

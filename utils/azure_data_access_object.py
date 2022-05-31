@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
+from azure.storage.filedatalake import DataLakeServiceClient
+from azure.core._match_conditions import MatchConditions
+from azure.storage.filedatalake._models import ContentSettings
 from dataclasses import dataclass
 from pyspark.sql import DataFrame
 from typing import Dict,List,Optional,Any
 
+import os, uuid, sys
 import pandas as pd
 
 
@@ -54,6 +58,9 @@ class AzureDatalakeDAO(DAO):
 
     def __init__(self, email:str, token:str)->None:pass 
 
+    def create_file_system(self)->None:pass 
+
+
     def get_all(self)->DataFrame:pass
 
     def get_latest_file(self, file:str)->str:pass
@@ -66,6 +73,35 @@ class AzureDatalakeDAO(DAO):
 
     def update(self)->None:pass 
 
+class PostgresDAO(DAO):
+    """
+    _summary_
+
+    _extended_summary_
+
+    :param DAO: _description_
+    :type DAO: _type_
+    """
+
+    def __init__(self)->None:pass 
+
+    def create_database(self)->None:pass 
+
+    def create_table(self)->None:pass 
+
+    def save(self)->None:pass 
+
+    def delete(self)->None:pass 
+
+    def insert(self)->None:pass 
+
+    def update(self)->None:pass 
+
+    def query(self)->None:pass 
+
+    def get_all_databases(self)->None:pass
+
+    def get_all_tables(self)->None:pass 
 
 
 
